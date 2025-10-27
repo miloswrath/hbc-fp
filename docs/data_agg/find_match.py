@@ -59,6 +59,13 @@ def list_pax_filenames_matching_seqn(seqns, base_url=BASE_URL):
 # df_filtered = ...  # your DataFrame
 matches = list_pax_filenames_matching_seqn(df_filtered['SEQN'])
 print(matches)
+# write matches to text file
+with open("matches.txt", "w") as f:
+    for fn in matches:
+        f.write(f"{fn}\n")
+
+
+
 
 def download_matches(filenames, dest="pax_g_downloads", base_url=BASE_URL):
     """
