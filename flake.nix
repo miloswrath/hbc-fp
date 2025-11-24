@@ -42,44 +42,12 @@
 
             doCheck = false;
           };
-          pyts = python.pkgs.buildPythonPackage rec {
-            pname = "pyts";
-            version = "0.13.0";
-
-            src = pkgs.fetchFromGitHub {
-              owner = "johannfaouzi";
-              repo = pname;
-              rev = "v${version}";
-              hash = "sha256-qlETmUO5K+nbSM3dJ2WWuKYwz4dFwqupkoC8BGckdAo=";
-            };
-
-            propagatedBuildInputs = with python.pkgs; [
-              numpy
-              scipy
-              scikitlearn
-              joblib
-              numba
-            ];
-
-            doCheck = false; # tests require extra data and heavy deps not in the dev shell
-            pythonImportsCheck = [ "pyts" ];
-          };
           # One unified Python environment for both Lab (frontend) and the theme
           pythonEnv = python.withPackages (ps:
             [
               ps.jupyterlab
               ps.ipykernel
-              ps.pandas
-              ps.numpy
-              ps.matplotlib
-              ps.seaborn
-              ps.plotly
-              ps.requests
-              ps.httpx
-              ps.scipy
-              ps.pyyaml
-              ps.pyreadstat
-            ] ++ [ catppuccin-jupyterlab pyts ]  # include the theme and packaged pyts here
+            ] ++ [ catppuccin-jupyterlab ]  # include the theme here
           );
         in {
           default = pkgs.mkShellNoCC {
@@ -87,6 +55,7 @@
             packages = [
               pythonEnv
               pkgs.git
+              pkgs.poetry
             ];
 
             # Optional: install a kernel spec matching this env
@@ -103,4 +72,5 @@
         });
     };
 }
+
 
