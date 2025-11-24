@@ -1,0 +1,52 @@
+#!/bin/bash
+#$ -pe smp 16
+#$ -cwd
+#$ -q VOSSHBC
+#$ -m bea
+#$ -M zjgilliam@uiowa.edu
+#$ -o $HOME/fp/logs/myjob_dry.out    # Standard output log
+#$ -e $HOME/fp/logs/myjob_dry.err    # Standard error log
+
+echo "=== DRY RUN: START ==="
+echo "Hostname: $(hostname)"
+echo "SGE Job ID: $JOB_ID"
+echo
+
+BASE_URL="https://ftp.cdc.gov/pub/pax_g/"
+echo "BASE_URL: $BASE_URL"
+
+source ../.zshrc
+echo "Loaded environment via ../.zshrc"
+
+echo "Activating micromamba env: hbc-fp"
+mm activate hbc-fp
+
+DEST="/Shared/vosslabhpc/Users/zak/fp/data_dump"
+LIST="../../docs/data_agg/matches.txt"
+
+echo "DEST: $DEST"
+echo "LIST: $LIST"
+echo
+
+echo "=== Checking files in matches.txt ==="
+if [[ ! -f "$LIST" ]]; then
+    echo "ERROR: List file not found: $LIST"
+    exit 1
+fi
+
+NLINES=$(wc -l < "$LIST")
+echo "Files listed: $NLINES"
+echo
+
+echo "=== DRY RUN: The following files *would* be downloaded: ==="
+echo
+
+# Preview the commands that would have run inside lftp
+while read -r f; do
+    [[ -z "$f" ]] && continue
+    echo "lftp get: $f"
+done < "$LIST"
+
+echo
+echo "=== DRY RUN: No FTP connection was made. No files downloaded. ==="
+echo "=== DRY RUN: END ==="

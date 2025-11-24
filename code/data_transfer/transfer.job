@@ -1,0 +1,28 @@
+#!/bin/bash
+#$ -pe smp 16
+#$ -cwd
+#$ -q VOSSHBC
+#$ -m bea
+#$ -M zjgilliam@uiowa.edu
+#$ -o $HOME/fp/logs/myjob.out  # Standard output log
+#$ -e $HOME/fp/logs/myjob.err  # Standard error log
+
+BASE_URL="https://ftp.cdc.gov/pub/pax_g/"
+source ../.zshrc
+
+mm activate hbc-fp
+
+DEST="/Shared/vosslabhpc/Users/zak/fp/data_dump"
+LIST="../../docs/data_agg/matches.txt"
+
+lftp -u "$BASE_URL" <<EOF
+set xfer:clobber on
+lcd $DEST
+
+# loop inside lftp and download each file
+$(while read -r f; do
+    echo "get \"$f\"";
+  done < "$LIST")
+
+bye
+EOF
