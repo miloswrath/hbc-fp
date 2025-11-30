@@ -16,8 +16,7 @@
 # ENVIRONMENT SETUP
 # ============================
 
-BASE_HOST="ftp.cdc.gov"
-REMOTE_PATH="/pub/pax_g/"
+BASE_URL="https://ftp.cdc.gov/pub/pax_g/"
 
 DEST="/Shared/vosslabhpc/Users/zak/fp/data_dump"           # Local destination for downloads
 LIST="../../docs/data_agg/matches.txt"                     # Text file containing list of filenames to download
@@ -31,23 +30,19 @@ LIST="../../docs/data_agg/matches.txt"                     # Text file containin
 #   • loops through every filename in matches.txt
 #   • executes an lftp "get" command for each file
 # ============================
-
 mkdir -p "$DEST"
 
-# Create a temporary batch file
-BATCH=$(mktemp)
+while read -r f; do
+  # Skip empty lines
+  [[ -z "$f" ]] && continue
 
-# Add commands
-{
-  echo "cd $REMOTE_PATH"
-  echo "lcd $DEST"
-  while read -r f; do
-    [[ -z "$f" ]] && continue
-    echo "get \"$f\""
-  done < "$LIST"
-} > "$BATCH"
+  # Full output path (preserve subdirectories if present in $f)
+  out="$DEST/$f"
 
-# Run SFTP in batch mode
-sftp -b "$BATCH" "$BASE_HOST"
+  # Download file with retries, create dirs as needed
+  curl -fSL --retry 3 --retry-delay 5 \
+    --create-dirs \
+    -o "$out" \
+    "${BASE_URL}${f}"
 
-rm "$BATCH"
+done < "$LIST"
