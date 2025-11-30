@@ -4,22 +4,20 @@
 # SGE JOB CONFIGURATION
 # ============================
 
-#$ -pe smp 16                         # Request 16 CPU cores
-#$ -cwd                               # Run job from the current working directory
-#$ -q VOSSHBC                         # Submit to the VOSSHBC queue
-#$ -m bea                             # Email on (b)egin, (e)nd, (a)bort
-#$ -M zjgilliam@uiowa.edu             # Email address for job notifications
-#$ -o $HOME/fp/logs/argon/myjob.out         # Standard output log file
-#$ -e $HOME/fp/logs/argon/myjob.err         # Standard error log file
+#$ -pe smp 8   
+#$ -cwd                             
+#$ -q VOSSHBC                        
+#$ -m bea                          
+#$ -M zjgilliam@uiowa.edu         
+#$ -o $HOME/fp/logs/argon/myjob.out  
+#$ -e $HOME/fp/logs/argon/myjob.err   
 
 # ============================
 # ENVIRONMENT SETUP
 # ============================
 
-BASE_URL="https://ftp.cdc.gov/pub/pax_g/"   # Remote CDC FTP directory
-source $HOME/.zshrc                            # Load user environment (PATH, micromamba, aliases, etc.)
-
-mm activate hbc-fp                           # Activate micromamba environment for tools needed by this job
+BASE_HOST="ftp.cdc.gov"
+REMOTE_PATH="/pub/pax_g/"
 
 DEST="/Shared/vosslabhpc/Users/zak/fp/data_dump"           # Local destination for downloads
 LIST="../../docs/data_agg/matches.txt"                     # Text file containing list of filenames to download
@@ -34,17 +32,22 @@ LIST="../../docs/data_agg/matches.txt"                     # Text file containin
 #   • executes an lftp "get" command for each file
 # ============================
 
-lftp "$BASE_URL" <<EOF
-set xfer:clobber on                      # Overwrite destination files if they already exist
-lcd $DEST                                 # Switch local working directory inside lftp
+mkdir -p "$DEST"
 
-# Loop inside lftp: generate one "get" command per line in the LIST file
-$(while read -r f; do
-    # Skip empty lines
-    [[ -z "\$f" ]] && continue
-    echo "get \"\$f\"";                   # Download this file from the remote server
-  done < "$LIST")
+# Create a temporary batch file
+BATCH=$(mktemp)
 
-bye                                        # Exit lftp session cleanly
-EOF
+# Add commands
+{
+  echo "cd $REMOTE_PATH"
+  echo "lcd $DEST"
+  while read -r f; do
+    [[ -z "$f" ]] && continue
+    echo "get \"$f\""
+  done < "$LIST"
+} > "$BATCH"
 
+# Run SFTP in batch mode
+sftp -b "$BATCH" "$BASE_HOST"
+
+rm "$BATCH"
