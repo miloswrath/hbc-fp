@@ -47,6 +47,7 @@
             [
               ps.jupyterlab
               ps.ipykernel
+              ps.pandas
             ] ++ [ catppuccin-jupyterlab ]  # include the theme here
           );
         in {
